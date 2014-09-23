@@ -1,0 +1,8 @@
+<?php
+include_once("headlessheadler.php");
+include_once("../fillTemplate.php");
+
+fillRtf("../formTemplates/VA_CLIENT_ATTORNEY_AGREEMENT.rtf", "VA_CLIENT_ATTORNEY_AGREEMENT.rtf", 1, $db);
+
+
+?>

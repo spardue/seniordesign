@@ -1,0 +1,83 @@
+<?php
+//require('headlessheader.php'); // Was giving me access denied when running script for some reason.
+ob_start(); // Suppress html from require
+require('header.php');
+ob_end_clean();
+
+function createFdf($pdffile){
+    $execCmd = "pdftk ".$pdffile." generate_fdf output ".substr($pdffile, 0, -4).".fdf";
+    exec($execCmd);
+}
+
+/**
+ * Replaces any $tag in the input file with corresponding data from the database and returns a string of the filled input file.
+ * $tag to data mapping is determined by the Mappings table.
+ * If no entry for a $tag exists in the table, that $tag is ignored. It will remain in the output file as "$tag". A line
+ *  will be echoed indicating such.
+ * FILES DON'T HAVE TO BE FDF FILES. RTF, ETC WILL WORK.
+ *
+ * $inputfile - Any file with $tags. Not altered.
+ * $personid - Corresponds to 'PersonID' in most tables, 'ClaimantID' in the 'Case' table, or 'ID' in the 'Person' table
+ * $db - $db object from header for db interaction.
+ */
+function fillTemplate($inputfile, $personid, $db){
+    // Pull fdf text into a string
+    $myfile = fopen($inputfile, "r") or die("Unable to open file!");
+    $filetext = fread($myfile,filesize($inputfile));
+    fclose($myfile);
+
+    // Extract $tags from fdf
+    preg_match_all('/\$\w*/', $filetext, $matches, PREG_OFFSET_CAPTURE, 3);
+    $metadata = array();
+
+    // Simplify array format
+    foreach($matches[0] as $val){
+        array_push($metadata,$val[0]);
+    }
+
+    $dataToInsert = array();
+    // Pull appropriate data from the db based on the each $tag's mapping in the Mappings table
+    foreach($metadata as $tag){
+        $mapping = $db->interact("SELECT * FROM `Mappings` WHERE `Tag` = :tag", array('tag' => $tag))->fetch();
+
+        if(count($mapping) == 1){ // Indicates a tag wasn't returned
+            echo "\nMetadata tag '".$tag."' does not exist! It will be not be replaced in or removed from the generated file.\n";
+        }
+        else{
+            if($mapping['Direct'] != ""){ // There is direct text data
+                $dataToInsert[$tag] = $mapping['Direct'];
+            }
+            else{ // There is table and column data
+                // Lookup by ID if Person table or by PersonID otherwise
+                if($mapping['MTable'] == "Person"){
+                    $idname = "ID";
+                }
+                else{
+                    $idname = "PersonID";
+                }
+                $info = $db->interact("SELECT `".$mapping['MCol']."` FROM `".$mapping['MTable']."` WHERE `".$idname."` = :id", array('id' => $personid))->fetch();
+//                echo "\n".$tag."  ".$info[$mapping['MCol']]."\n"; // debug print
+                $dataToInsert[$tag] = $info[$mapping['MCol']];
+            }
+        }
+    }
+
+    // Replace the tags with data in the fdf text
+    foreach($dataToInsert as $tag => $data){
+//        echo $tag." => ".$data."\n"; // debug print
+        $filetext = str_replace($tag,$data,$filetext);
+    }
+
+    return $fileText;
+    /*
+//    echo $filetext; // debug print
+    // Writing to output file
+    file_put_contents($outputfile, $filetext);
+}
+
+/*
+//exec("pdftk MasterTest.pdf fill_form MasterTest.pdf.fdf output MasterTestFilled.pdf");
+createFdf("fillTest/MasterTest.pdf");
+fillFdf("fillTest/MasterTest.fdf","fillTest/filled.fdf",4,$db);
+*/
+?>

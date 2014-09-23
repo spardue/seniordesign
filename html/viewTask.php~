@@ -1,0 +1,254 @@
+<?php
+include_once("header.php");
+
+/*gets the appropiate Task from the given $_GET inputs for this task */
+function getTask($db)
+{
+    $query = $db->interact(
+        "SELECT * FROM Task WHERE CaseID = :case AND TaskTypeID = :taskType",
+        array(
+            ":case" => $_GET["caseID"],
+            ":taskType" => $_GET["taskTypeID"]
+        )
+    );
+    return $query->fetch(PDO::FETCH_ASSOC);
+}
+
+$CASE_ID = null;
+$TASK_TYPE_ID = null;
+//if task ID exists, just get that row but be sure to set $CASE_ID, and Task_TYPE_ID
+if (isset($_GET["taskID"])) {
+    $query = $db->interact("SELECT * FROM Task WHERE id = ?", array($_GET["taskID"]));
+    $task = $query->fetch(PDO::FETCH_ASSOC);
+    $CASE_ID = $task["CaseID"];
+    $TASK_TYPE_ID = $task["TaskTypeID"];
+} else { //the task doesn't exist so we must retrieve it using $_GET variables
+    $task = getTask($db);
+    if (!$task) {
+        //if it doesn't exist, create one
+        $db->interact(
+            "INSERT INTO Task(CaseID, TaskTypeID) Values(:case, :taskType)",
+            array(
+                ":case" => $_GET["caseID"],
+                ":taskType" => $_GET["taskTypeID"]
+            )
+        );
+        $task = getTask($db);
+    }
+    $CASE_ID = $_GET["caseID"];
+    $TASK_TYPE_ID = $_GET["taskTypeID"];
+}
+// get the task Task from the database 
+$taskType = $db->interact(
+    "SELECT * FROM TaskType WHERE id = :taskType",
+    array(":taskType" => $TASK_TYPE_ID)
+)->fetch(PDO::FETCH_ASSOC);
+
+
+/* task status changer helper */
+function getTaskStatus($taskStatus)
+{
+    $confirmedTaskStatus;
+
+    switch ($taskStatus) {
+        case "Not Started":
+        case "In Progress":
+        case "Completed":
+        case "Not Applicable":
+            $confirmedTaskStatus = htmlspecialchars($taskStatus);
+            break;
+        default:
+            $confirmedTaskStatus = "Unknown";
+    }
+    return $confirmedTaskStatus;
+}
+
+/*task status changer helper */
+function getTaskStatusButtonStyle($taskStatus)
+{
+    $taskStatusButtonStyle;
+
+    switch ($taskStatus) {
+        case "Not Started":
+            $taskStatusButtonStyle = "label-default";
+            break;
+        case "In Progress":
+            $taskStatusButtonStyle = "btn-success";
+            break;
+        case "Completed":
+            $taskStatusButtonStyle = "btn-default";
+            break;
+        case "Not Applicable":
+            $taskStatusButtonStyle = "btn-default";
+            break;
+        default:
+            $taskStatusButtonStyle = "btn-warning";
+    }
+    return $taskStatusButtonStyle;
+}
+
+/*task status changer */
+function newTaskStatusDropdown($task)
+{
+    $taskID = $task["ID"];
+    $taskStatus = getTaskStatus($task["Status"]);
+    $taskStatusButtonStyle = getTaskStatusButtonStyle($taskStatus);
+
+    return "
+        <div class=\"btn-group\">
+          <button id=\"taskStatusButton" . $taskID . "\" type=\"button\" "
+    . "data-toggle=\"dropdown\"
+            class=\"btn " . $taskStatusButtonStyle . " dropdown-toggle\">
+            <span id=\"taskStatus" . $taskID . "\">" . $taskStatus . "</span>
+              <span class=\"caret\"></span>
+          </button>
+          <ul class=\"dropdown-menu\" role=\"menu\">
+            <li><a onClick=\"updateTaskStatus(" . $taskID . ", 'Not Started')\""
+    . ">Not Started</a></li>
+            <li><a onClick=\"updateTaskStatus(" . $taskID . ", 'In Progress')\""
+    . ">In Progress</a></li>
+            <li><a onClick=\"updateTaskStatus(" . $taskID . ", 'Completed')\""
+    . ">Completed</a></li>
+            <li><a onClick=\"updateTaskStatus(" . $taskID . ", 'Not Applicable')\""
+    . ">Not Applicable</a></li>
+            <li><a onClick=\"updateTaskStatus(" . $taskID . ", 'Unknown')\""
+    . ">Unknown</a></li>
+          </ul>
+        </div>";
+}
+
+?>
+<div class="container">
+    <div class="page-header">
+        <h2>Task: <strong><?php echo $taskType["Name"]; ?></strong></h2>
+    </div>
+    <div class="container">
+        <?php
+        echo "<h3>Status: " . newTaskStatusDropdown($task) . "</h3>";
+        echo '<br/>';
+        echo '<a href="viewCase.php?id=' . $CASE_ID . '#tasksTab">Back to Case</a>';
+        ?>
+    </div>
+    <br>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"><h4>Description</h4></div>
+        <div class="panel-body">
+            <pre><?php echo $taskType["Description"]; ?></pre>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading"><h4>Required Documents</h4></div>
+        <div class="panel-body">
+            <?php
+            //outputs AutoGeneration script links */
+            $forms = $taskType["AutoGenerationRoutines"];
+            $forms = explode(";", $forms);
+            foreach ($forms as $form) {
+                $form = explode(",", $form);
+                $id = $form[0];
+                $name = $form[1];
+                echo "<a href='fillForm.php?caseID=$CASE_ID&formID=$id'>$name</a>";
+                echo "<br>";
+            }
+            ?>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading"><h4>Associated Uploaded Documents</h4></div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <tr>
+                    <th>Document Information</th>
+                    <th>Download</th>
+                </tr>
+                <?php
+                /* shows all the associated documents with the Task */
+                $db->each_row("SELECT * FROM Document WHERE TaskID = ?", array($task["ID"]), function ($row) {
+                    $docID = $row["ID"];
+
+                    $dlLink = "<button type='button' class='btn btn-primary'  onclick='document.location = \"download.php?id=$docID\"'>";
+                    $dlLink .= "<span class='glyphicon glyphicon-download'></span>";
+                    $dlLink .= "</button>";
+
+                    echo "<tr>";
+
+                    echo "<td>";
+                    echo "<a href='viewDoc.php?id=$docID'>" . htmlspecialchars($row["Name"]) . "</a>";
+                    echo "</td>";
+
+                    echo "<td>";
+                    echo $dlLink;
+                    echo "</td>";
+
+                    echo "</tr>";
+                });
+
+                ?>
+            </table>
+        </div>
+    </div>
+
+
+    <div id="taskComments">
+        <?php
+        $comments = new Comments("task-" . $CASE_ID . "-" . $TASK_TYPE_ID, $db);
+        $comments->show();
+        ?>
+    </div>
+</div>
+</body>
+</html>
+<script>
+
+//helper functions to change the task status
+    function getTaskStatusButtonClasses(statusText) {
+        var statusButtonClasses;
+
+        switch (statusText) {
+            case "Not Started":
+                statusButtonClasses = "btn label-default dropdown-toggle";
+                break;
+            case "In Progress":
+                statusButtonClasses = "btn btn-success dropdown-toggle";
+                break;
+            case "Completed":
+                statusButtonClasses = "btn btn-default dropdown-toggle";
+                break;
+            case "Not Applicable":
+                statusButtonClasses = "btn btn-default dropdown-toggle";
+                break;
+            default:
+                statusButtonClasses = "btn btn-warning dropdown-toggle";
+        }
+        return statusButtonClasses;
+    }
+
+    function updateTaskStatus(taskID, newStatus) {
+        var taskStatusElement = document.getElementById("taskStatus" + taskID);
+        var oldStatus = taskStatusElement.innerHTML;
+
+        if (oldStatus != newStatus) {
+            document.getElementById("taskStatusButton" + taskID).className =
+                getTaskStatusButtonClasses(newStatus);
+            taskStatusElement.innerHTML = newStatus;
+
+            var dataKV = {};
+            dataKV["TableName"] = "Task";
+            dataKV["id"] = taskID;
+            dataKV["Status"] = newStatus;
+            $.post("updateVACaseSystemDB.php", dataKV,function (data) {
+                if (data.indexOf("ERROR!!!") > -1) {
+                    document.getElementById("taskStatusButton" + taskID).className =
+                        getTaskStatusButtonClasses(oldStatus);
+                    taskStatusElement.innerHTML = oldStatus;
+                    setTimeout(function () {
+                        $.blockUI({message: "Could not save task status because of an error."
+                        });
+                        setTimeout($.unblockUI, 5000);
+                    }, 350);
+                }
+            }).always($.unblockUI);
+        }
+    }
+</script>

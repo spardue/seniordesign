@@ -1,0 +1,79 @@
+<?php
+require('header.php');
+$stmt = $db->interact("SELECT * FROM `Person` WHERE `ID` = :id", array('id' => $_GET["id"]));
+$case = $stmt->fetch();
+
+
+function createTableRow($case, $columnName, $label)
+{
+    echo "<tr>
+            <td>$label</td>
+            <td><input type=\"text\" name=\"$label\" id=\"$label\" value=\"$case[$columnName]\" disabled=\"disabled\"></td>
+        </tr>";
+
+}
+
+?>
+<div>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Case Information</th>
+            <th><a href="">Edit Info</a></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        createTableRow($case, "FirstName", "First Name");
+        createTableRow($case, "MiddleName", "Middle Name");
+        createTableRow($case, "LastName", "Last Name");
+        createTableRow($case, "NameOfAlternateContact", "Alternate Contact");
+        createTableRow($case, "RelationToAlternateContact", "Relaction to A.C.");
+        createTableRow($case, "PhoneOfAlternateContact", "Phone Number of A.C.");
+        createTableRow($case, "Address", "Address");
+        createTableRow($case, "City", "City");
+        createTableRow($case, "State", "State");
+        createTableRow($case, "ZIP", "Zip Code");
+        createTableRow($case, "MailingAddress", "Mailing Address");
+        createTableRow($case, "MailingCity", "Mailing City");
+        createTableRow($case, "MailingState", "Mailing State");
+        createTableRow($case, "MailingZIP", "Mailing Zip Code");
+        createTableRow($case, "HomePhone", "Home Phone");
+        createTableRow($case, "BusinessPhone", "Business Phone");
+        createTableRow($case, "CellPhone", "Cell Phone");
+        createTableRow($case, "Fax", "Fax");
+        createTableRow($case, "Email", "Email");
+        createTableRow($case, "SSN", "SSN");
+        createTableRow($case, "BirthDate", "Date of Birth");
+        createTableRow($case, "BirthPlace", "Place of Birth");
+        createTableRow($case, "MaritalStatus", "Marital Status");
+        createTableRow($case, "MarriageDate", "Date of Marriage");
+        createTableRow($case, "SpouseName", "Name of Spouse");
+        createTableRow($case, "DivorceDate", "Date of Divorce");
+        createTableRow($case, "StateWhereDivorced", "State of Divorce");
+        createTableRow($case, "IsEmployed", "Employed?");
+        createTableRow($case, "EmployerName", "Employer Name");
+        createTableRow($case, "ReasonForUnemployment", "Reason for Unemployment");
+        createTableRow($case, "IsReceivingSSDI/SSI", "Receiving SSDI/SSI?");
+        createTableRow($case, "HasAppliedForSSI", "Has Applied for SSI?");
+        createTableRow($case, "HasAppliedForSSDI", "Has Applied for SSDI?");
+        createTableRow($case, "RelationToVeteran", "Relation to Veteran");
+        createTableRow($case, "IDOfVeteranRelation", "Id of Veteran Relation");
+        createTableRow($case, "IsMilitaryRetired", "Is Military Retired?");
+        createTableRow($case, "IsMilitaryMedicalRetired", "Is Military Medical Retired?");
+        createTableRow($case, "HasPEBDisabilityPercentage", "Has PEB Disability %?");
+        createTableRow($case, "CurrentVADisabilityPercentage", "Current VA Disability %");
+        createTableRow($case, "CurrentRatingDisabilityPercentage", "Curent Rading Disability %");
+        createTableRow($case, "HasSubmittedSSDIB/SSIApplication", "Has Submitted SSDIB/SSI Application?");
+        createTableRow($case, "DateSubmittedSSDIB/SSIApplication", "Date Submitted SSDIB/SSI Application");
+        createTableRow($case, "VARO", "VARO");
+        createTableRow($case, "VADecisionDate", "VA Decision Date");
+        createTableRow($case, "IssuesToAppeal", "Issues to Appeal");
+        createTableRow($case, "ServiceConnection", "Service Connection");
+        createTableRow($case, "PercentageOfDisability", "% of Disability");
+        createTableRow($case, "Unemployability", "Unemployability");
+        createTableRow($case, "AdditionalInformation", "Additional Info");
+        ?>
+        </tbody>
+    </table>
+</div>

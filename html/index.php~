@@ -1,0 +1,198 @@
+<?php
+/*
+   This file actually serves as the case list and case add interface
+*/
+require('header.php');
+
+function caseTable($db, $query, $args){
+?>
+
+<table class='table'>
+    <tr>
+    <th>Name</th>
+    <th>ID</th>
+    <th>Status</th>
+    <th>Date Created</th>
+    <th>Synopsis</th>
+    <th>Open</th>
+    </th>
+    <?php
+
+    //outputs the case list
+    $db->each_row($query, $args, function ($row) {
+        echo "<tr>";
+        echo "<td>";
+        echo '<a href="viewCase.php?id=' . $row["ID"] . '">' . htmlspecialchars($row["Name"]) . '</a>';
+        echo "</td>";
+        echo "<td>" . $row["ID"] . "</td>";
+        echo "<td>" . $row["Status"] . "</td>";
+        echo "<td>" . $row["Created"] . "</td>";
+
+        if (strlen($row["Synopsis"]) > 50) {
+            $synopsis = substr($row["Synopsis"], 0, 50) . "...";
+        } else {
+            $synopsis = $row["Synopsis"];
+        }
+        echo "<td>" . htmlspecialchars($synopsis) . "</td>";
+
+
+        $caseID = $row["ID"];
+        echo "<td>";
+        echo "<button type='button' class='btn btn-primary' ";
+        echo "onclick='window.location=\"viewCase.php?id=$caseID\"'>";
+        echo "<span class='glyphicon glyphicon-folder-open'></span>";
+        echo "</button>";
+        echo "</td>";
+        echo "</tr>";
+    });
+    echo "</table>";
+    }
+
+    ?>
+
+    <div class='container'>
+        <div class="page-header">
+            <h2>Cases</h2>
+        </div>
+        <p>
+            <button type="button" class="btn btn-primary btn-lg" id="addNewCase" data-toggle="modal"
+                    data-target="#addCaseModal">Add Case
+            </button>
+        </p>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Case List</h3>
+            </div>
+            <table class="table">
+                <?php
+                // Only display cases in the case list if they are not archived
+                caseTable($db, "SELECT * FROM `Case` WHERE `Archived`!=1", null);
+                ?>
+            </table>
+            </ul>
+        </div>
+        <div class="modal fade" id="addCaseModal" tabindex="-1" role="dialog" aria-labelledby="addCaseModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="addCaseModalLabel">Add case</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form role="form">
+                            <div class="form-group">
+                                <label for="newCaseName">New Case Name</label>
+                                <input type="text" class="form-control" name="newCaseName" id="newCaseName">
+                                <br/>
+                                <label for="claimantDropdownButton">Add a Claimant</label>
+                                <br/>
+
+                                <div class="btn-group">
+                                    <button id="claimantDropdownButton" type="button"
+                                            data-toggle="dropdown" name="claimantDropdownButton"
+                                            class="btn btn-primary dropdown-toggle">
+                                        <span id="claimantButtonText">New Claimant</span>
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li><a onClick="updateClaimantDropdown(null, 'New Claimant')">New Claimant</a>
+                                        </li>
+                                        <?php
+                                        /*repeat claimant logic */
+                                        $claimants = $db->interact("SELECT * FROM `Person`", array()
+                                        )->fetchAll(PDO::FETCH_ASSOC);
+
+                                        foreach ($claimants as $row) {
+                                            $firstName = $row["FirstName"];
+                                            $lastName = $row["LastName"];
+                                            $displayedName;
+                                            if ($firstName == null) {
+                                                if ($lastName == null) {
+                                                    $displayedName = "(No name)";
+                                                } else {
+                                                    $displayedName = $row["LastName"];
+                                                }
+                                            } else if ($lastName == null) {
+                                                if ($firstName == null) {
+                                                    $displayedName = "(No name)";
+                                                } else {
+                                                    $displayedName = $row["FirstName"];
+                                                }
+                                            } else {
+                                                $displayedName = $row["LastName"] . ", " . $row["FirstName"];
+                                            }
+                                            $displayedName = $row["ID"] . ": " . $displayedName;
+
+                                            echo "
+                      <li><a onClick=\"updateClaimantDropdown(" . $row["ID"]
+                                                . ", '" . $displayedName . "')\""
+                                                . ">" . $displayedName . "</a></li>";
+                                        }
+                                        ?>
+                                    </ul>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button id="addNewCaseButton" type="button" class="btn btn-default" data-dismiss="modal">Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+            // Display the list of archived cases if the current user is the admin
+            if ($_SESSION["user_name"] === "admin") { ?>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Archived Cases</h3>
+                </div>
+                <ul class="list-group">
+                    <?php
+                        caseTable($db, "SELECT * FROM `Case` WHERE `Archived`=1", null);
+                    ?>
+                </ul>
+            </div>
+        <?php } ?>
+    </div>
+    <script>
+
+        var claimantID = null;
+
+        function updateClaimantDropdown(selectedClaimantID, newDisplayText) {
+            document.getElementById("claimantButtonText").innerHTML = newDisplayText;
+            claimantID = selectedClaimantID;
+        }
+
+        //add new case click event handler
+        $("#addNewCaseButton").click(function () {
+            var caseName = document.getElementById("newCaseName").value;
+            if (caseName == null || caseName.length < 1) {
+                alert("Please enter a case name.");
+            }
+            else {
+                $.blockUI({message: "Creating Case.."});
+                //calls the add case script and handles if it is actually created or not
+                $.post("addCase.php", {"newCaseName": $("#newCaseName").val(), "claimantID": claimantID},
+                    function (data) {
+                        if (data.indexOf("ERROR!!!") > -1) {
+                            setTimeout(function () {
+                                $.blockUI({message: "Could not create the case because of an error :("});
+                                setTimeout($.unblockUI, 5000);
+                            }, 350);
+                        } else {
+                            if (claimantID == null) {
+                                window.location = "viewCase.php?id=" + data + "#infoTab";
+                            }
+                            else {
+                                window.location = "viewCase.php?id=" + data;
+                            }
+                        }
+                    }
+                ).always($.unblockUI);
+            }
+        });
+    </script>

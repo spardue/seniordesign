@@ -1,0 +1,152 @@
+%FDF-1.2
+%‚„œ”
+1 0 obj 
+<<
+/FDF 
+<<
+/Fields [
+<<
+/Kids [
+<<
+/Kids [
+<<
+/V /
+/T (IICheckbox2[0])
+>> 
+<<
+/V ()
+/T (SignatureOfRep[0])
+>> 
+<<
+/Kids [
+<<
+/V ($serviceNumbers)
+/T ([0])
+>>]
+/T (SERVICENOS\\)
+>> 
+<<
+/V /bos-navy
+/T (BOSCheckbox2[0])
+>> 
+<<
+/V /bos-other
+/T (BOSCheckbox6[0])
+>> 
+<<
+/V ($address, $city, $state, $zip)
+/T (ADDRESSOFCLAIMANT[0])
+>> 
+<<
+/V /
+/T (IICheckbox3[0])
+>> 
+<<
+/V ($veteranName)
+/T (NAMEOFVETERAN[0])
+>> 
+<<
+/V ($attorneyName, Attorney)
+/T (NAMEOFINDIVIDUALAPPOINTEDASCLAIMANTSREPRESENTATIVE[0])
+>> 
+<<
+/V ($attorneyAddress)
+/T (ADDRESSOFINDIVIDUALAPPOINTEDASCLAIMANTSREPRESENTATATIVE[0])
+>> 
+<<
+/V /bos-army
+/T (BOSCheckbox1[0])
+>> 
+<<
+/V /bos-coast
+/T (BOSCheckbox5[0])
+>> 
+<<
+/V ($vaFileNumbers)
+/T (JF11[0])
+>> 
+<<
+/V /
+/T (IICheckbox2100[0])
+>> 
+<<
+/V ($otherBOS)
+/T (JF15[0])
+>> 
+<<
+/V /bos-marine
+/T (BOSCheckbox4[0])
+>> 
+<<
+/V ()
+/T (SignatureOfClaimant[0])
+>> 
+<<
+/V ($firstname $lastname)
+/T (NAMEOFCLAIMANT[0])
+>> 
+<<
+/V /1
+/T (IICheckbox1[0])
+>> 
+<<
+/V ()
+/T (SpecifyOrganization[0])
+>> 
+<<
+/V /bos-air
+/T (BOSCheckbox3[0])
+>>]
+/T (#subform[0])
+>> 
+<<
+/Kids [
+<<
+/V /
+/T (AuthorizationForRepActClaimantsBehalf[0])
+>> 
+<<
+/V ()
+/T (SIGNATUREOFREPRESENTATIVE[0])
+>> 
+<<
+/V ()
+/T (CLAIMANTSRELATIONSHIPTOVETERAN[0])
+>> 
+<<
+/V ()
+/T (Date12[0])
+>> 
+<<
+/V (VA Compensation Only)
+/T (LIMITAITONS[0])
+>> 
+<<
+/V ()
+/T (Date16[0])
+>> 
+<<
+/V ()
+/T (SIGNATUREOFCLAIMANT[0])
+>> 
+<<
+/V /1
+/T (AuthorizationForRepAccessToRecords[0])
+>> 
+<<
+/V (VA Compensation only)
+/T (LIMITATIONOFCONSENT[0])
+>>]
+/T (#subform[1])
+>>]
+/T (form1[0])
+>>]
+>>
+>>
+endobj 
+trailer
+
+<<
+/Root 1 0 R
+>>
+%%EOF

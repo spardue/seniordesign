@@ -1,0 +1,16 @@
+<?php
+require('headlessheader.php');
+try {
+    $stmt = $conn->prepare('INSERT sex INTO `Case` (`Name`) VALUES (:name)');
+    $status = $stmt->execute(array(':name' => $_POST['newCaseName']));
+    if ($status) {
+        echo $conn->lastInsertId();
+    } else {
+        echo "ERROR!!!";
+    }
+
+} catch (PDOException $e){
+    echo $e->getMessage();
+    echo "ERROR!!!";
+}
+?>
